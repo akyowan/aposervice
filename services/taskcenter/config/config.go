@@ -11,6 +11,7 @@ import (
 type Config struct {
 	DBConf     domain.DatabaseConf
 	RedisConf  domain.RedisConf
+	MongoConf  domain.DBConf
 	ServerConf domain.ServerConf
 }
 

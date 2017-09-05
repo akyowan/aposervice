@@ -2,6 +2,7 @@ package adapter
 
 import (
 	"aposervice/domain"
+	//"gopkg.in/mgo.v2/bson"
 	"time"
 )
 
@@ -50,10 +51,21 @@ func UpdateApoTasksToDB(tasks []domain.ApoTask, withStatus bool) error {
 }
 
 func GetAllApoTaskFromMongo() (map[int]domain.ApoTask, error) {
-	return nil, nil
+	c := mgoPool.C("apo_tasks")
+	var tasks []domain.ApoTask
+	if err := c.Find(nil).All(&tasks); err != nil {
+		return nil, err
+	}
+
+	tasksMap := make(map[int]domain.ApoTask)
+	for i := range tasks {
+		tasksMap[tasks[i].ID] = tasks[i]
+	}
+	return tasksMap, nil
 }
 
 func SaveTasksToMongo(tasks []domain.ApoTask) error {
+	//c := mgoPool.C("apo_tasks")
 	return nil
 }
 

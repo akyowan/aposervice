@@ -23,11 +23,11 @@ type ApoTask struct {
 	AmoutModelID int64         `json:"amount_model_id,omitempty"`
 	Status       ApoTaskStatus `json:"status,omitempty"`
 	PreaddCount  int           `json:"preadd_count"`
-	PreaddTime   *time.Time    `json:"_time,omitempty"`
-	StartTime    *time.Time    `json:"_time,omitempty"`
-	EndTime      *time.Time    `json:"_time,omitempty"`
-	CreatedAt    *time.Time    `json:"_time,omitempty" gorm:"column:create_time"`
-	UpdatedAt    *time.Time    `json:"_time,omitempty" gorm:"column:update_time"`
+	PreaddTime   *time.Time    `json:"preadd_time,omitempty"`
+	StartTime    *time.Time    `json:"start_time,omitempty"`
+	EndTime      *time.Time    `json:"end_time,omitempty"`
+	CreatedAt    *time.Time    `json:"create_time,omitempty" gorm:"column:create_time"`
+	UpdatedAt    *time.Time    `json:"update_time,omitempty" gorm:"column:update_time"`
 }
 
 func (*ApoTask) TableName() string {

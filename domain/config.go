@@ -8,6 +8,14 @@ type DatabaseConf struct {
 	DBName   string
 }
 
+type DBConf struct {
+	Host     string
+	Port     int
+	User     string
+	Password string
+	DBName   string
+}
+
 type RedisConf struct {
 	Host string
 	Port string

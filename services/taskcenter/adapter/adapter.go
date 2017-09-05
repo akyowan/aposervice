@@ -1,11 +1,13 @@
 package adapter
 
 import (
+	"aposervice/services/taskcenter/config"
+	"fxlibraries/mongo"
 	"fxlibraries/mysql"
-	"fxservice/service/chatcenter/config"
 )
 
 var dbPool *mysql.DBPool
+var mgoPool *mongo.MgoPool
 
 func init() {
 	dbPool = mysql.NewDBPool(mysql.DBPoolConfig{
@@ -18,4 +20,10 @@ func init() {
 		MaxOpenConns: 8,
 		Debug:        config.IsDebug,
 	})
+	mgoPool = mongo.NewPool(&mongo.MongodbConfig{
+		Host:   config.Conf.MongoConf.Host,
+		Port:   config.Conf.MongoConf.Port,
+		DBName: config.Conf.MongoConf.DBName,
+	})
+
 }
