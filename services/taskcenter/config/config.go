@@ -9,10 +9,10 @@ import (
 )
 
 type Config struct {
-	DBConf     domain.DatabaseConf
-	RedisConf  domain.RedisConf
-	MongoConf  domain.DBConf
-	ServerConf domain.ServerConf
+	Mysql   domain.DBConf
+	Redis   domain.DBConf
+	MongoDB domain.DBConf
+	Server  domain.ServerConf
 }
 
 var (

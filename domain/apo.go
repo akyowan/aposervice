@@ -14,7 +14,7 @@ type ApoTask struct {
 	DoingCount   int           `json:"doing_count"`
 	TimeoutCount int           `json:"timeount_count"`
 	FailCount    int           `json:"fail_count,omitempty"`
-	ApoKey       int           `json:"apo_key,omitempty"`
+	ApoKey       string        `json:"apo_key,omitempty"`
 	AccountBrief string        `json:"account_brief,omitempty"`
 	Cycle        int           `json:"cycel"`
 	RemindCycle  int           `json:"remind_cycle"`

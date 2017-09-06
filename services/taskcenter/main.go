@@ -6,5 +6,5 @@ import (
 )
 
 func main() {
-	app.Start(config.Conf.ServerConf.InternalListenAddress)
+	app.Start(config.Conf.Server.InternalListenAddress)
 }

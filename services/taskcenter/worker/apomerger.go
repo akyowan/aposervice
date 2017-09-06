@@ -60,12 +60,15 @@ func (merger *AppMerger) mergeTasks() {
 		}
 	}
 
+	loggers.Info.Printf("Merge %d", len(mergedTasks))
 	if err := adapter.UpdateApoTasksToDB(mergedTasks, true); err != nil {
 		loggers.Error.Printf("AppMerger update merged apo tasks to db error:%s", err.Error())
 	}
 	if err := adapter.SaveTasksToMongo(mergedTasks); err != nil {
 		loggers.Error.Printf("AppMerger save apo tasks to mongo error:%s", err.Error())
 	}
+
+	//loggers.Info.Printf("Deleted %d", len(deletedTasks))
 	if err := adapter.UpdateApoTasksToDB(deletedTasks, false); err != nil {
 		loggers.Error.Printf("AppMerger update deleted apo tasks to db error:%s", err.Error())
 	}

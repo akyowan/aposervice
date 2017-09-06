@@ -2,7 +2,10 @@ package adapter
 
 import (
 	"aposervice/domain"
-	//"gopkg.in/mgo.v2/bson"
+	"fxlibraries/loggers"
+
+	"gopkg.in/mgo.v2"
+
 	"time"
 )
 
@@ -11,7 +14,7 @@ func GetOnlineApoTasksFromDB() (map[int]domain.ApoTask, error) {
 	var tasks []domain.ApoTask
 	now := time.Now()
 	db = db.Where("status = ?", domain.ApoTaskStatusStart)
-	db = db.Where("start_time < ?", now).Where("end_time < ?", now)
+	db = db.Where("start_time < ?", now).Where("end_time > ?", now)
 	dbResult := db.Find(&tasks)
 	if dbResult.RecordNotFound() {
 		return nil, nil
@@ -40,20 +43,25 @@ func UpdateApoTasksToDB(tasks []domain.ApoTask, withStatus bool) error {
 		if withStatus {
 			updates["status"] = t.Status
 		}
-		if err := db.Model(&t).Updates(&updates).Error; err != nil {
+		loggers.Info.Printf("update %d to db", t.ID)
+		if err := db.Model(&t).Updates(updates).Error; err != nil {
 			db.Rollback()
 			return err
 		}
 	}
-
 	db.Commit()
+
 	return nil
 }
 
 func GetAllApoTaskFromMongo() (map[int]domain.ApoTask, error) {
 	c := mgoPool.C("apo_tasks")
 	var tasks []domain.ApoTask
-	if err := c.Find(nil).All(&tasks); err != nil {
+	err := c.Find(nil).All(&tasks)
+	if err == mgo.ErrNotFound {
+		return nil, nil
+	}
+	if err != nil {
 		return nil, err
 	}
 
@@ -64,15 +72,40 @@ func GetAllApoTaskFromMongo() (map[int]domain.ApoTask, error) {
 	return tasksMap, nil
 }
 
+func GetApoTaskFromMongo(id int) (*domain.ApoTask, error) {
+	c := mgoPool.C("apo_tasks")
+	var task domain.ApoTask
+	if err := c.FindId(id).One(&task); err != nil {
+		return nil, err
+	}
+	return &task, nil
+}
+
 func SaveTasksToMongo(tasks []domain.ApoTask) error {
-	//c := mgoPool.C("apo_tasks")
+	c := mgoPool.C("apo_tasks")
+	for i := range tasks {
+		t := tasks[i]
+		if _, err := c.UpsertId(t.ID, &t); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
 func GetFirstApoTask() (*domain.ApoTask, error) {
+	c := mgoPool.C("apo_tasks")
+	var task domain.ApoTask
+	if err := c.Find(nil).Sort("update_time", "start_time", "end_time", "level").Limit(1).One(&task); err != nil {
+		return nil, err
+	}
 	return nil, nil
 }
 
 func DeleteApoTaskFromMongo(id int) error {
+	c := mgoPool.C("apo_tasks")
+	if err := c.RemoveId(id); err != nil {
+		return err
+	}
 	return nil
 }
