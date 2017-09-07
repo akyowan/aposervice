@@ -24,8 +24,8 @@ type ApoTask struct {
 	Status       ApoTaskStatus `json:"status,omitempty"`
 	PreaddCount  int           `json:"preadd_count"`
 	PreaddTime   *time.Time    `json:"preadd_time,omitempty"`
-	StartTime    *time.Time    `json:"start_time,omitempty"`
-	EndTime      *time.Time    `json:"end_time,omitempty"`
+	StartTime    *time.Time    `json:"start_time,omitempty" gorm:"column:start"`
+	EndTime      *time.Time    `json:"end_time,omitempty" gorm:"column:end"`
 	CreatedAt    *time.Time    `json:"create_time,omitempty" gorm:"column:create_time"`
 	UpdatedAt    *time.Time    `json:"update_time,omitempty" gorm:"column:update_time"`
 }
@@ -42,4 +42,24 @@ const (
 	ApoTaskStatusPause                 // 暂停
 	ApoTaskStatusEnd                   // 完成
 	ApoTaskStatusDeleted               // 删除
+)
+
+type ApoSubTask struct {
+	ID       int        `json:"-" gorm:"primary_key;column:id;unique_index:devices_pkey"`
+	ApoID    int        `json:"apo_id"`
+	Count    int        `json:"count"`
+	Status   int        `json:"status"`
+	ExecTime *time.Time `json:"exec_time"`
+	CreateAt *time.Time `json:"create_time" gorm:"column:create_time"`
+}
+
+func (*ApoSubTask) TableName() string {
+	return "apo_sub_task"
+}
+
+type ApoSubTaskStatus int
+
+const (
+	ApoSubTaskDisable ApoSubTaskStatus = iota //  禁用
+	ApoSubTaskEnable                          // 可用
 )

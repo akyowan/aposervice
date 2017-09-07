@@ -21,6 +21,14 @@ func (merger *AppMerger) Start() {
 }
 
 func (merger *AppMerger) mergeTasks() {
+	if err := adapter.MergeSubTaskToMain(); err != nil {
+		loggers.Error.Printf("AppMerger merge sub task to main task error:%s", err.Error())
+		return
+	}
+	if err := adapter.UpdateApoTasksStatus(); err != nil {
+		loggers.Error.Printf("AppMerger refresh apo tasks status error:%s", err.Error())
+		return
+	}
 	dbTasks, err := adapter.GetOnlineApoTasksFromDB()
 	if err != nil {
 		loggers.Error.Printf("AppMerger get online tasks from db error:%s", err.Error())
@@ -51,41 +59,32 @@ func (merger *AppMerger) mergeTasks() {
 	if cacheTasks != nil {
 		for _, v := range cacheTasks {
 			id := v.ID
-			if t, ok := dbTasks[id]; !ok {
+			if _, ok := dbTasks[id]; !ok {
 				if err := adapter.DeleteApoTaskFromMongo(id); err != nil {
 					loggers.Error.Printf("AppMerger delete task:%d from mongo error:%s", id, err.Error())
+					continue
 				}
-				deletedTasks = append(deletedTasks, t)
+				deletedTasks = append(deletedTasks, v)
 			}
 		}
 	}
 
-	loggers.Info.Printf("Merge %d", len(mergedTasks))
-	if err := adapter.UpdateApoTasksToDB(mergedTasks, true); err != nil {
+	if err := adapter.UpdateApoTasksToDB(mergedTasks); err != nil {
 		loggers.Error.Printf("AppMerger update merged apo tasks to db error:%s", err.Error())
 	}
 	if err := adapter.SaveTasksToMongo(mergedTasks); err != nil {
 		loggers.Error.Printf("AppMerger save apo tasks to mongo error:%s", err.Error())
 	}
 
-	//loggers.Info.Printf("Deleted %d", len(deletedTasks))
-	if err := adapter.UpdateApoTasksToDB(deletedTasks, false); err != nil {
+	if err := adapter.UpdateApoTasksToDB(deletedTasks); err != nil {
 		loggers.Error.Printf("AppMerger update deleted apo tasks to db error:%s", err.Error())
 	}
 }
 
 func (merger *AppMerger) mergeTask(dbTask *domain.ApoTask, cacheTask *domain.ApoTask) *domain.ApoTask {
-	now := time.Now()
 	(*dbTask).DoingCount = (*cacheTask).DoingCount
 	(*dbTask).DoneCount = (*cacheTask).DoneCount
 	(*dbTask).TimeoutCount = (*cacheTask).TimeoutCount
 	(*dbTask).FailCount = (*cacheTask).FailCount
-	if (*dbTask).DoneCount >= (*dbTask).Total {
-		(*dbTask).Status = domain.ApoTaskStatusEnd
-	}
-	endTime := *((*dbTask).EndTime)
-	if endTime.Unix() < now.Unix() {
-		(*dbTask).Status = domain.ApoTaskStatusEnd
-	}
 	return dbTask
 }

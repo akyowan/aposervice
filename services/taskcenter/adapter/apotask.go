@@ -2,7 +2,7 @@ package adapter
 
 import (
 	"aposervice/domain"
-	"fxlibraries/loggers"
+	"github.com/jinzhu/gorm"
 
 	"gopkg.in/mgo.v2"
 
@@ -14,7 +14,7 @@ func GetOnlineApoTasksFromDB() (map[int]domain.ApoTask, error) {
 	var tasks []domain.ApoTask
 	now := time.Now()
 	db = db.Where("status = ?", domain.ApoTaskStatusStart)
-	db = db.Where("start_time < ?", now).Where("end_time > ?", now)
+	db = db.Where("start < ?", now).Where("end > ?", now)
 	dbResult := db.Find(&tasks)
 	if dbResult.RecordNotFound() {
 		return nil, nil
@@ -30,7 +30,7 @@ func GetOnlineApoTasksFromDB() (map[int]domain.ApoTask, error) {
 	return tasksMap, nil
 }
 
-func UpdateApoTasksToDB(tasks []domain.ApoTask, withStatus bool) error {
+func UpdateApoTasksToDB(tasks []domain.ApoTask) error {
 	db := dbPool.NewConn().Begin()
 	for i := range tasks {
 		t := tasks[i]
@@ -40,16 +40,57 @@ func UpdateApoTasksToDB(tasks []domain.ApoTask, withStatus bool) error {
 			"fail_count":    t.FailCount,
 			"timeout_count": t.TimeoutCount,
 		}
-		if withStatus {
-			updates["status"] = t.Status
-		}
-		loggers.Info.Printf("update %d to db", t.ID)
 		if err := db.Model(&t).Updates(updates).Error; err != nil {
 			db.Rollback()
 			return err
 		}
 	}
 	db.Commit()
+
+	return nil
+}
+
+func MergeSubTaskToMain() error {
+	db := dbPool.NewConn().Begin()
+	now := time.Now()
+	var tasks []domain.ApoSubTask
+	dbResult := db.Where("status = ?", domain.ApoSubTaskEnable).Where("exec_time < ?", now).Find(&tasks)
+	if dbResult.RecordNotFound() {
+		db.Rollback()
+		return nil
+	}
+	if dbResult.Error != nil {
+		db.Rollback()
+		return dbResult.Error
+	}
+	for i := range tasks {
+		t := tasks[i]
+		if err := db.Where("id = ?", t.ApoID).Update("total", gorm.Expr("total + ?", t.Count)).Error; err != nil {
+			db.Rollback()
+			return err
+		}
+		if err := db.Where("id = ?", t.ID).Update("status = ?", domain.ApoSubTaskDisable).Error; err != nil {
+			db.Rollback()
+			return err
+		}
+	}
+	db.Commit()
+	return nil
+}
+
+func UpdateApoTasksStatus() error {
+	db := dbPool.NewConn()
+
+	sCur := db.Where("status = ?", domain.ApoTaskStatusEnd).Where("total > (doing_count + done_count)")
+	if err := sCur.Model(&domain.ApoTask{}).Update("status", domain.ApoTaskStatusStart).Error; err != nil {
+		return err
+	}
+
+	now := time.Now()
+	eCur := db.Where("status = ?", domain.ApoTaskStatusStart).Where("total <= done_count OR end <= ?", now)
+	if err := eCur.Model(&domain.ApoTask{}).Update("Status", domain.ApoTaskStatusEnd).Error; err != nil {
+		return err
+	}
 
 	return nil
 }
