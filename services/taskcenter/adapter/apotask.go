@@ -5,6 +5,7 @@ import (
 	"github.com/jinzhu/gorm"
 
 	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 
 	"time"
 )
@@ -30,17 +31,16 @@ func GetOnlineApoTasksFromDB() (map[int]domain.ApoTask, error) {
 	return tasksMap, nil
 }
 
-func UpdateApoTasksToDB(tasks []domain.ApoTask) error {
+func UpdateApoTasksToDB(tasks map[int]domain.ApoTask) error {
 	db := dbPool.NewConn().Begin()
-	for i := range tasks {
-		t := tasks[i]
+	for _, v := range tasks {
 		updates := map[string]interface{}{
-			"doing_count":   t.DoingCount,
-			"done_count":    t.DoneCount,
-			"fail_count":    t.FailCount,
-			"timeout_count": t.TimeoutCount,
+			"doing_count":   v.DoingCount,
+			"done_count":    v.DoneCount,
+			"fail_count":    v.FailCount,
+			"timeout_count": v.TimeoutCount,
 		}
-		if err := db.Model(&t).Updates(updates).Error; err != nil {
+		if err := db.Model(&v).Updates(updates).Error; err != nil {
 			db.Rollback()
 			return err
 		}
@@ -132,6 +132,40 @@ func SaveTasksToMongo(tasks []domain.ApoTask) error {
 	}
 
 	return nil
+}
+
+func SaveTaskToMongo(task *domain.ApoTask) error {
+	c := mgoPool.C("apo_tasks")
+	data := domain.ApoTask{
+		AppID:        task.AppID,
+		AppName:      task.AppName,
+		BundleID:     task.BundleID,
+		Level:        task.Level,
+		Total:        task.Total,
+		RealTotal:    task.RealTotal,
+		ApoKey:       task.ApoKey,
+		AccountBrief: task.AccountBrief,
+		Cycle:        task.Cycle,
+		RemindCycle:  task.RemindCycle,
+		UncatchDay:   task.UncatchDay,
+		TypeModelID:  task.TypeModelID,
+		AmoutModelID: task.AmoutModelID,
+		PreaddCount:  task.PreaddCount,
+		PreaddTime:   task.PreaddTime,
+		StartTime:    task.StartTime,
+		EndTime:      task.EndTime,
+		CreatedAt:    task.CreatedAt,
+		UpdatedAt:    task.UpdatedAt,
+	}
+	var err error
+	if err = c.UpdateId(task.ID, bson.M{"$set": data}); err == nil {
+		return nil
+	}
+	if err = c.Insert(&task); err == nil {
+		return nil
+	}
+
+	return err
 }
 
 func GetFirstApoTask() (*domain.ApoTask, error) {
