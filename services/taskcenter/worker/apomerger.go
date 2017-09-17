@@ -1,7 +1,6 @@
 package worker
 
 import (
-	"aposervice/domain"
 	"aposervice/services/taskcenter/adapter"
 	"fxlibraries/loggers"
 	"time"
@@ -41,50 +40,24 @@ func (merger *AppMerger) mergeTasks() {
 		return
 	}
 
-	var mergedTasks []domain.ApoTask
-	var deletedTasks []domain.ApoTask
+	for _, v := range dbTasks {
+		if err := adapter.SaveTaskToMongo(&v); err != nil {
+			loggers.Error.Printf("AppMerger save task to mongo error:%s", err.Error())
+			return
+		}
+	}
 
-	if dbTasks != nil {
-		for _, v := range dbTasks {
-			id := v.ID
-			if t, ok := cacheTasks[id]; ok {
-				task := merger.mergeTask(&v, &t)
-				mergedTasks = append(mergedTasks, *task)
-			} else {
-				mergedTasks = append(mergedTasks, v)
+	for _, v := range cacheTasks {
+		id := v.ID
+		if _, ok := dbTasks[id]; !ok {
+			if err := adapter.DeleteApoTaskFromMongo(id); err != nil {
+				loggers.Error.Printf("AppMerger delete task:%d from mongo error:%s", id, err.Error())
+				continue
 			}
 		}
 	}
 
-	if cacheTasks != nil {
-		for _, v := range cacheTasks {
-			id := v.ID
-			if _, ok := dbTasks[id]; !ok {
-				if err := adapter.DeleteApoTaskFromMongo(id); err != nil {
-					loggers.Error.Printf("AppMerger delete task:%d from mongo error:%s", id, err.Error())
-					continue
-				}
-				deletedTasks = append(deletedTasks, v)
-			}
-		}
-	}
-
-	if err := adapter.UpdateApoTasksToDB(mergedTasks); err != nil {
-		loggers.Error.Printf("AppMerger update merged apo tasks to db error:%s", err.Error())
-	}
-	if err := adapter.SaveTasksToMongo(mergedTasks); err != nil {
-		loggers.Error.Printf("AppMerger save apo tasks to mongo error:%s", err.Error())
-	}
-
-	if err := adapter.UpdateApoTasksToDB(deletedTasks); err != nil {
+	if err := adapter.UpdateApoTasksToDB(cacheTasks); err != nil {
 		loggers.Error.Printf("AppMerger update deleted apo tasks to db error:%s", err.Error())
 	}
-}
-
-func (merger *AppMerger) mergeTask(dbTask *domain.ApoTask, cacheTask *domain.ApoTask) *domain.ApoTask {
-	(*dbTask).DoingCount = (*cacheTask).DoingCount
-	(*dbTask).DoneCount = (*cacheTask).DoneCount
-	(*dbTask).TimeoutCount = (*cacheTask).TimeoutCount
-	(*dbTask).FailCount = (*cacheTask).FailCount
-	return dbTask
 }

@@ -3,31 +3,31 @@ package domain
 import "time"
 
 type ApoTask struct {
-	ID           int           `json:"-" gorm:"primary_key;column:id;unique_index:devices_pkey"`
-	AppID        string        `json:"app_id,omitempty"`
-	AppName      string        `json:"app_name,omitempty"`
-	BundleID     string        `json:"bundle_id,omitempty"`
-	Level        int           `json:"level"`
-	Total        int           `json:"total"`
-	RealTotal    int           `json:"real_total"`
-	DoneCount    int           `json:"done_count"`
-	DoingCount   int           `json:"doing_count"`
-	TimeoutCount int           `json:"timeount_count"`
-	FailCount    int           `json:"fail_count,omitempty"`
-	ApoKey       string        `json:"apo_key,omitempty"`
-	AccountBrief string        `json:"account_brief,omitempty"`
-	Cycle        int           `json:"cycel"`
-	RemindCycle  int           `json:"remind_cycle"`
-	UncatchDay   int           `json:"uncatch_day"`
-	TypeModelID  int64         `json:"type_model_id,omitempty"`
-	AmoutModelID int64         `json:"amount_model_id,omitempty"`
-	Status       ApoTaskStatus `json:"status,omitempty"`
-	PreaddCount  int           `json:"preadd_count"`
-	PreaddTime   *time.Time    `json:"preadd_time,omitempty"`
-	StartTime    *time.Time    `json:"start_time,omitempty" gorm:"column:start"`
-	EndTime      *time.Time    `json:"end_time,omitempty" gorm:"column:end"`
-	CreatedAt    *time.Time    `json:"create_time,omitempty" gorm:"column:create_time"`
-	UpdatedAt    *time.Time    `json:"update_time,omitempty" gorm:"column:update_time"`
+	ID           int           `bson:"_id,omitempty" gorm:"primary_key;column:id;unique_index:devices_pkey"`
+	AppID        string        `bson:"app_id,omitempty"`
+	AppName      string        `bson:"app_name,omitempty"`
+	BundleID     string        `bson:"bundle_id,omitempty"`
+	Level        int           `bson:"level,omitempty"`
+	Total        int           `bson:"total,omitempty"`
+	RealTotal    int           `bson:"real_total,omitempty"`
+	DoneCount    int           `bson:"done_count,omitempty"`
+	DoingCount   int           `bson:"doing_count,omitempty"`
+	TimeoutCount int           `bson:"timeount_count,omitempty"`
+	FailCount    int           `bson:"fail_count,omitempty"`
+	ApoKey       string        `bson:"apo_key,omitempty"`
+	AccountBrief string        `bson:"account_brief,omitempty"`
+	Cycle        int           `bson:"cycel,omitempty"`
+	RemindCycle  int           `bson:"remind_cycle,omitempty"`
+	UncatchDay   int           `bson:"uncatch_day,omitempty"`
+	TypeModelID  int64         `bson:"type_model_id,omitempty"`
+	AmoutModelID int64         `bson:"amount_model_id,omitempty"`
+	Status       ApoTaskStatus `bson:"status,omitempty"`
+	PreaddCount  int           `bson:"preadd_count,omitempty"`
+	PreaddTime   *time.Time    `bson:"preadd_time,omitempty"`
+	StartTime    *time.Time    `bson:"start_time,omitempty" gorm:"column:start"`
+	EndTime      *time.Time    `bson:"end_time,omitempty" gorm:"column:end"`
+	CreatedAt    *time.Time    `bson:"create_time,omitempty" gorm:"column:create_time"`
+	UpdatedAt    *time.Time    `bson:"update_time,omitempty" gorm:"column:update_time"`
 }
 
 func (*ApoTask) TableName() string {
