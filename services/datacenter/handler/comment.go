@@ -30,5 +30,20 @@ func AddComments(req *httpserver.Request) *httpserver.Response {
 
 // GetComments 从数据中心获取评论
 func GetComments(req *httpserver.Request) *httpserver.Response {
-	return nil
+	query := adapter.GetCommentsQuery{
+		Status: 0,
+	}
+
+	query.ApoID = req.QueryParams.Get("apo_id")
+	query.AppID = req.QueryParams.Get("app_id")
+
+	comments, err := adapter.GetComments(&query)
+	if err != nil {
+		loggers.Error.Printf("GetComments error %s", err.Error())
+		return httpserver.NewResponseWithError(errors.InternalServerError)
+	}
+
+	resp := httpserver.NewResponse()
+	resp.Data = comments
+	return resp
 }

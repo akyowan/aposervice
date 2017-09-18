@@ -4,9 +4,10 @@ import (
 	"aposervice/domain"
 	"crypto/md5"
 	"fmt"
-	"gopkg.in/mgo.v2/bson"
 	"io"
 	"time"
+
+	"gopkg.in/mgo.v2/bson"
 )
 
 type AddCommentsResult struct {
@@ -57,6 +58,7 @@ func AddComments(comments []domain.ApoComment) (*AddCommentsResult, error) {
 
 // GetComments
 func GetComments(query *GetCommentsQuery) ([]domain.ApoComment, error) {
+	comments := []domain.ApoComment{}
 	queryParam := bson.M{}
 	if query.AppID != "" {
 		queryParam["app_id"] = query.AppID
@@ -67,9 +69,24 @@ func GetComments(query *GetCommentsQuery) ([]domain.ApoComment, error) {
 	if query.Status != 0 {
 		queryParam["status"] = query.Status
 	}
+
+	//var timeRange map[string]interface{}
+	//if query.Start != nil {
+	//	timeRange["$gt"] = query.Start
+	//}
+	//if query.End != nil {
+	//	timeRange["$lt"] = query.End
+	//}
+	//queryParam["update_time"] = timeRange
 	pool := mgoPool.C("apo_comments")
-	pool.Find(queryParam).Limit(query.Limit).Skip(query.Offset)
-	return nil, nil
+	//if err := pool.Find(queryParam).Limit(query.Limit).Skip(query.Offset).All(&comments); err != nil {
+
+	if err := pool.Find(queryParam).All(&comments); err != nil {
+		//if err := pool.Find(nil).All(&comments); err != nil {
+		return nil, err
+	}
+
+	return comments, nil
 }
 
 // Md5
