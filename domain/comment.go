@@ -1,10 +1,12 @@
 package domain
 
 import (
+	"gopkg.in/mgo.v2/bson"
 	"time"
 )
 
 type ApoComment struct {
+	ID       bson.ObjectId    `json:"id,omitempty" bson:"_id"`
 	AppID    string           `json:"app_id,omitempty" bson:"app_id,omitempty"`
 	ApoID    string           `json:"apo_id,omitempty" bson:"app_od,omitempty"`
 	Content  string           `json:"content,omitempty" bson:"content,omitempty"`

@@ -1,7 +1,7 @@
 package adapter
 
 import (
-	"aposervice/services/datacenter/config"
+	"aposervice/config"
 	"fxlibraries/mongo"
 	//"fxlibraries/mysql"
 )
@@ -24,6 +24,6 @@ func init() {
 		Host:   config.Conf.MongoDB.Host,
 		Port:   config.Conf.MongoDB.Port,
 		DBName: config.Conf.MongoDB.DBName,
-		Debug:  false,
+		Debug:  config.IsDebug,
 	})
 }

@@ -70,19 +70,19 @@ func GetComments(query *GetCommentsQuery) ([]domain.ApoComment, error) {
 		queryParam["status"] = query.Status
 	}
 
-	//var timeRange map[string]interface{}
-	//if query.Start != nil {
-	//	timeRange["$gt"] = query.Start
-	//}
-	//if query.End != nil {
-	//	timeRange["$lt"] = query.End
-	//}
-	//queryParam["update_time"] = timeRange
+	if query.Start != nil || query.End != nil {
+		timeRange := bson.M{}
+		if query.Start != nil {
+			timeRange["$gt"] = query.Start
+		}
+		if query.End != nil {
+			timeRange["$lt"] = query.End
+		}
+		queryParam["update_time"] = timeRange
+	}
 	pool := mgoPool.C("apo_comments")
-	//if err := pool.Find(queryParam).Limit(query.Limit).Skip(query.Offset).All(&comments); err != nil {
 
-	if err := pool.Find(queryParam).All(&comments); err != nil {
-		//if err := pool.Find(nil).All(&comments); err != nil {
+	if err := pool.Find(queryParam).Limit(query.Limit).Skip(query.Offset).All(&comments); err != nil {
 		return nil, err
 	}
 
