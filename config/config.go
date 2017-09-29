@@ -9,10 +9,11 @@ import (
 )
 
 type Config struct {
-	Mysql   domain.DBConf
-	Redis   domain.DBConf
-	MongoDB domain.DBConf
-	Server  domain.ServerConf
+	Mysql              domain.DBConf
+	Redis              domain.DBConf
+	MongoDB            domain.DBConf
+	Server             domain.ServerConf
+	CommentDayMaxCount int64
 }
 
 var (

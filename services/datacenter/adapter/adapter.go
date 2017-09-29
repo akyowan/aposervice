@@ -1,7 +1,7 @@
 package adapter
 
 import (
-	"aposervice/services/datacenter/config"
+	"aposervice/config"
 	"fxlibraries/mongo"
 	//"fxlibraries/mysql"
 )

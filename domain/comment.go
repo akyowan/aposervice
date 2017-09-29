@@ -12,6 +12,7 @@ type ApoComment struct {
 	Content  string           `json:"content,omitempty" bson:"content,omitempty"`
 	MD5      string           `json:"md5,omitempty" bson:"md5,omitempty"`
 	IP       string           `json:"ip,omitempty" bson:"ip,omitempty"`
+	Errno    int              `json:"errno,omitempty" bson:"-"`
 	Status   ApoCommentStatus `json:"status,omitempty" bson:"status,omitempty"`
 	CreateAt *time.Time       `json:"create_time,omitempty" bson:"create_time,omitempty"`
 	UpdateAt *time.Time       `json:"update_time,omitempty" bson:"update_time,omitempty"`

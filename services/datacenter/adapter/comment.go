@@ -36,6 +36,7 @@ func AddComments(comments []domain.ApoComment) (*AddCommentsResult, error) {
 	now := time.Now()
 	for _, c := range comments {
 		c.MD5 = MD5(c.Content)
+		c.ID = bson.NewObjectId()
 		count, err = pool.Find(bson.M{"app_id": c.AppID, "md5": c.MD5}).Count()
 		if err != nil {
 			return nil, err

@@ -1,8 +1,8 @@
 package main
 
 import (
-	"aposervice/services/datacenter/app"
-	"aposervice/services/datacenter/config"
+	"aposervice/config"
+	"aposervice/services/apocenter/app"
 )
 
 func main() {
