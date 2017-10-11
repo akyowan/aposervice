@@ -63,13 +63,14 @@ func MergeSubTaskToMain() error {
 		db.Rollback()
 		return dbResult.Error
 	}
+	var mainTask domain.ApoTask
 	for i := range tasks {
 		t := tasks[i]
-		if err := db.Where("id = ?", t.ApoID).Update("total", gorm.Expr("total + ?", t.Count)).Error; err != nil {
+		if err := db.Table(mainTask.TableName()).Where("id = ?", t.ApoID).Update("total", gorm.Expr("total + ?", t.Count)).Error; err != nil {
 			db.Rollback()
 			return err
 		}
-		if err := db.Where("id = ?", t.ID).Update("status = ?", domain.ApoSubTaskDisable).Error; err != nil {
+		if err := db.Table(t.TableName()).Where("id = ?", t.ID).Update("status = ?", domain.ApoSubTaskDisable).Error; err != nil {
 			db.Rollback()
 			return err
 		}
@@ -113,6 +114,19 @@ func GetAllApoTaskFromMongo() (map[int]domain.ApoTask, error) {
 	return tasksMap, nil
 }
 
+func GetApoTasksFromMongo(limit int) ([]domain.ApoTask, error) {
+	c := mgoPool.C("apo_tasks")
+	var tasks []domain.ApoTask
+	err := c.Find(nil).Sort("level").Limit(limit).All(&tasks)
+	if err == mgo.ErrNotFound {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return tasks, nil
+}
+
 func GetApoTaskFromMongo(id int) (*domain.ApoTask, error) {
 	c := mgoPool.C("apo_tasks")
 	var task domain.ApoTask
@@ -120,6 +134,15 @@ func GetApoTaskFromMongo(id int) (*domain.ApoTask, error) {
 		return nil, err
 	}
 	return &task, nil
+}
+
+func GetFirstApoTask() (*domain.ApoTask, error) {
+	c := mgoPool.C("apo_tasks")
+	var task domain.ApoTask
+	if err := c.Find(nil).Sort("update_time", "start_time", "end_time", "level").Limit(1).One(&task); err != nil {
+		return nil, err
+	}
+	return nil, nil
 }
 
 func SaveTasksToMongo(tasks []domain.ApoTask) error {
@@ -168,19 +191,15 @@ func SaveTaskToMongo(task *domain.ApoTask) error {
 	return err
 }
 
-func GetFirstApoTask() (*domain.ApoTask, error) {
-	c := mgoPool.C("apo_tasks")
-	var task domain.ApoTask
-	if err := c.Find(nil).Sort("update_time", "start_time", "end_time", "level").Limit(1).One(&task); err != nil {
-		return nil, err
-	}
-	return nil, nil
-}
-
 func DeleteApoTaskFromMongo(id int) error {
 	c := mgoPool.C("apo_tasks")
 	if err := c.RemoveId(id); err != nil {
 		return err
 	}
 	return nil
+}
+
+func CleanTaskAccountCache() {
+	maxCache := adapter.MaxApoCache
+	c := mgoPool.C("apo_accounts_cache")
 }

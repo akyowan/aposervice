@@ -1,13 +1,16 @@
 package adapter
 
 import (
-	"aposervice/services/taskcenter/config"
+	"aposervice/config"
 	"fxlibraries/mongo"
 	"fxlibraries/mysql"
+	"fxlibraries/redis"
+	"strconv"
 )
 
 var dbPool *mysql.DBPool
 var mgoPool *mongo.MgoPool
+var redisPool *redis.RedisPool
 
 func init() {
 	dbPool = mysql.NewPool(mysql.DBPoolConfig{
@@ -24,5 +27,12 @@ func init() {
 		Host:   config.Conf.MongoDB.Host,
 		Port:   config.Conf.MongoDB.Port,
 		DBName: config.Conf.MongoDB.DBName,
+	})
+
+	redisDB, _ := strconv.Atoi(config.Conf.Redis.DBName)
+	redisPool = redis.NewPool(&redis.RedisConfig{
+		Host: config.Conf.Redis.Host,
+		DB:   redisDB,
+		Port: config.Conf.Redis.Port,
 	})
 }
