@@ -114,15 +114,32 @@ func GetAllApoTaskFromMongo() (map[int]domain.ApoTask, error) {
 	return tasksMap, nil
 }
 
-func GetApoTasksFromMongo(limit int) ([]domain.ApoTask, error) {
+func GetApoTasksFromMongo() ([]domain.ApoTask, error) {
 	c := mgoPool.C("apo_tasks")
 	var tasks []domain.ApoTask
-	err := c.Find(nil).Sort("level").Limit(limit).All(&tasks)
+	err := c.Find(nil).Sort("start_time", "pub_time", "level").All(&tasks)
 	if err == mgo.ErrNotFound {
 		return nil, nil
 	}
 	if err != nil {
 		return nil, err
+	}
+	pre := tasks[0]
+	for i := 1; i < len(tasks); i++ {
+		cur := tasks[i]
+		if cur.AppID != pre.AppID {
+			pre = cur
+			continue
+		}
+		for j := i + 1; j < len(tasks); j++ {
+			apo := tasks[j]
+			if apo.AppID != pre.AppID {
+				tasks[i] = tasks[j]
+				pre = cur
+				break
+			}
+		}
+		break
 	}
 	return tasks, nil
 }
@@ -197,9 +214,4 @@ func DeleteApoTaskFromMongo(id int) error {
 		return err
 	}
 	return nil
-}
-
-func CleanTaskAccountCache() {
-	maxCache := adapter.MaxApoCache
-	c := mgoPool.C("apo_accounts_cache")
 }
