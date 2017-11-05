@@ -13,3 +13,11 @@ type ServerConf struct {
 	ExternalListenAddress string
 	InternalListenAddress string
 }
+
+type Storage struct {
+	Bucket    string
+	EndPoint  string
+	AccessID  string
+	AccessKey string
+	CDNHost   string
+}
