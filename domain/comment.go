@@ -9,7 +9,7 @@ type ApoComment struct {
 	ID       bson.ObjectId    `json:"id,omitempty" bson:"_id"`
 	AppID    string           `json:"app_id,omitempty" bson:"app_id,omitempty"`
 	ApoID    string           `json:"apo_id,omitempty" bson:"app_od,omitempty"`
-	Content  string           `json:"content,omitempty" bson:"content,omitempty"`
+	Content  interface{}      `json:"content,omitempty" bson:"content,omitempty"`
 	MD5      string           `json:"md5,omitempty" bson:"md5,omitempty"`
 	IP       string           `json:"ip,omitempty" bson:"ip,omitempty"`
 	Errno    int              `json:"errno,omitempty" bson:"-"`

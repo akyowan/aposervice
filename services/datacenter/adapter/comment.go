@@ -3,6 +3,7 @@ package adapter
 import (
 	"aposervice/domain"
 	"crypto/md5"
+	"encoding/json"
 	"fmt"
 	"io"
 	"time"
@@ -35,7 +36,8 @@ func AddComments(comments []domain.ApoComment) (*AddCommentsResult, error) {
 	pool := mgoPool.C("apo_comments")
 	now := time.Now()
 	for _, c := range comments {
-		c.MD5 = MD5(c.Content)
+		contentStr, _ := json.Marshal(c.Content)
+		c.MD5 = MD5(string(contentStr))
 		c.ID = bson.NewObjectId()
 		count, err = pool.Find(bson.M{"app_id": c.AppID, "md5": c.MD5}).Count()
 		if err != nil {
