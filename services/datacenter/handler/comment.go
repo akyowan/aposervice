@@ -99,9 +99,12 @@ func UpdateComment(req *httpserver.Request) *httpserver.Response {
 	}
 	newComment, err := adapter.UpdateComment(id, &comment)
 	if err != nil {
+		loggers.Warn.Printf("UpdateComment error:%s", err.Error())
 		if err.Error() == "Exist" {
-			loggers.Warn.Printf("UpdateComment error:%s", err.Error())
 			return httpserver.NewResponseWithError(errors.NewNotFound("Content is exist"))
+		}
+		if err.Error() == "NotFound" {
+			return httpserver.NewResponseWithError(errors.NotFound)
 		}
 		return httpserver.NewResponseWithError(errors.InternalServerError)
 	}
