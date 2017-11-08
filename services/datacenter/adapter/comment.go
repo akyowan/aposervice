@@ -4,10 +4,13 @@ import (
 	"aposervice/domain"
 	"crypto/md5"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"time"
 
+	"fxlibraries/loggers"
+	"fxlibraries/mongo"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -90,6 +93,105 @@ func GetComments(query *GetCommentsQuery) ([]domain.ApoComment, error) {
 	}
 
 	return comments, nil
+}
+
+// DeleteComment
+func DeleteComment(id string) error {
+	pool := mgoPool.C("apo_comments")
+	if !bson.IsObjectIdHex(id) {
+		loggers.Error.Printf("DeleteComment invalid object id:%s", id)
+		return errors.New("NotFound")
+	}
+	objID := bson.ObjectIdHex(id)
+	if err := pool.RemoveId(objID); err != nil {
+		if mongo.NotFound(err) {
+			return errors.New("NotFound")
+		}
+		return err
+	}
+	return nil
+}
+
+// DeleteComments
+func DeleteComments(ids []string) error {
+	pool := mgoPool.C("apo_comments")
+	var objIDs []bson.ObjectId
+	for i := range ids {
+		if !bson.IsObjectIdHex(ids[i]) {
+			loggers.Error.Printf("DeleteComment invalid object id:%s", ids[i])
+			continue
+		}
+		objIDs = append(objIDs, bson.ObjectIdHex(ids[i]))
+	}
+	queryParam := bson.M{
+		"_id": bson.M{
+			"$in": objIDs,
+		},
+	}
+
+	info, err := pool.RemoveAll(queryParam)
+	if err != nil {
+		return err
+	}
+	loggers.Debug.Printf("DeleteComments match:%d removed:%d updated:%d", info.Matched, info.Removed, info.Updated)
+	return nil
+}
+
+// DeleteAppComments
+func DeleteAppComments(appID string) error {
+	pool := mgoPool.C("apo_comments")
+	queryParam := bson.M{"app_id": appID}
+
+	info, err := pool.RemoveAll(queryParam)
+	if err != nil {
+		return err
+	}
+	loggers.Debug.Printf("DeleteAppComments match:%d removed:%d updated:%d", info.Matched, info.Removed, info.Updated)
+	return nil
+}
+
+// UpdateComment
+func UpdateComment(id string, comment *domain.ApoComment) (*domain.ApoComment, error) {
+	if !bson.IsObjectIdHex(id) {
+		loggers.Error.Printf("DeleteComment invalid object id:%s", id)
+		return nil, errors.New("NotFound")
+	}
+	comment.ID = bson.ObjectIdHex(id)
+	pool := mgoPool.C("apo_comments")
+	var oldComment domain.ApoComment
+	if err := pool.FindId(comment.ID).One(&oldComment); err != nil {
+		loggers.Error.Printf("UpdateComment FindId id:%s error:%s", comment.ID, err.Error())
+		if mongo.NotFound(err) {
+			return nil, errors.New("NotFound")
+		}
+		return nil, err
+	}
+	if comment.AppID != "" {
+		oldComment.AppID = comment.AppID
+	}
+
+	contentStr, _ := json.Marshal(comment.Content)
+	comment.MD5 = MD5(string(contentStr))
+	count, err := pool.Find(bson.M{"app_id": oldComment.AppID, "md5": comment.MD5, "_id": bson.M{"$ne": oldComment.ID}}).Count()
+	if err != nil {
+		loggers.Error.Printf("UpdateComment Find app_id:%s md5:%s error:%s", oldComment.ApoID, comment.MD5, err.Error())
+		return nil, err
+	}
+	if count > 0 {
+		loggers.Error.Printf("UpdateComment app_id:%s md5:%s error:content is exist", oldComment.ApoID, comment.MD5)
+		return nil, errors.New("Exist")
+	}
+
+	now := time.Now()
+	oldComment.MD5 = comment.MD5
+	oldComment.Content = comment.Content
+	oldComment.UpdateAt = &now
+	if err := pool.UpdateId(oldComment.ID, oldComment); err != nil {
+		loggers.Error.Printf("UpdateComment UpdateId id:%s error:%s", oldComment.ID, err.Error())
+		return nil, err
+	}
+
+	return &oldComment, nil
 }
 
 // Md5
