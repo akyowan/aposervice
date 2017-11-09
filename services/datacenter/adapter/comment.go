@@ -54,7 +54,7 @@ func AddComments(comments []domain.ApoComment) (*AddCommentsResult, error) {
 		c.CreateAt = &now
 		c.UpdateAt = &now
 		c.Status = domain.ApoCommentStatusFree
-		if _, err = pool.Upsert(bson.M{"md5": c.MD5}, c); err != nil {
+		if err := pool.Insert(c); err != nil {
 			return nil, err
 		}
 		result.Success += 1
