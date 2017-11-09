@@ -26,6 +26,7 @@ func Start(addr string) {
 
 	// Update comment
 	r.RouteHandleFunc("/comments/{id}", handler.UpdateComment).Methods("PATCH")
+	r.RouteHandleFunc("/comments", handler.UpdateAndDeleteComments).Methods("PATCH")
 
 	loggers.Info.Printf("Starting data center external service [\033[0;32;1mOK\t%+v\033[0m] \n", addr)
 	panic(r.ListenAndServe(addr))

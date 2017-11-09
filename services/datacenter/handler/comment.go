@@ -112,3 +112,45 @@ func UpdateComment(req *httpserver.Request) *httpserver.Response {
 	resp.Data = newComment
 	return resp
 }
+
+// UpdateAndDeleteComments
+func UpdateAndDeleteComments(req *httpserver.Request) *httpserver.Response {
+	var comments []domain.ApoComment
+	if err := req.Parse(&comments); err != nil {
+		loggers.Warn.Printf("UpdateAndDeleteComments invalid param")
+		return httpserver.NewResponseWithError(errors.ParameterError)
+	}
+	result := make(map[string]string)
+
+	for i := range comments {
+		comment := comments[i]
+		id := comment.ID.Hex()
+		if comment.Action == "delete" {
+			if err := adapter.DeleteComment(id); err != nil {
+				loggers.Warn.Printf("DeleteComment id:%s error:%s", id, err.Error())
+				if err.Error() == "NotFound" {
+					result[id] = err.Error()
+				} else {
+					result[id] = "UnkownError"
+				}
+				continue
+			}
+			result[id] = "ok"
+			continue
+		}
+		if _, err := adapter.UpdateComment(id, &comment); err != nil {
+			loggers.Warn.Printf("UpdateComment id:%s error:%s", id, err.Error())
+			if err.Error() == "NotFound" || err.Error() == "Exists" {
+				result[id] = err.Error()
+			} else {
+				result[id] = "UnkownError"
+			}
+			continue
+		}
+		result[id] = "ok"
+	}
+
+	resp := httpserver.NewResponse()
+	resp.Data = result
+	return resp
+}
