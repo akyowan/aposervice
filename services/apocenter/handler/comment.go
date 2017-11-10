@@ -67,7 +67,7 @@ func ReportComment(req *httpserver.Request) *httpserver.Response {
 
 	if _, err := adapter.UpdateComment(&param); err != nil {
 		loggers.Warn.Printf("ReportComment error %s", err.Error())
-		return httpserver.NewResponseWithError(err)
+		return httpserver.NewResponseWithError(errors.InternalServerError)
 	}
 
 	return httpserver.NewResponse()
