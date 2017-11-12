@@ -58,6 +58,19 @@ func ReportComment(req *httpserver.Request) *httpserver.Response {
 		loggers.Warn.Printf("ReportComment no comment id")
 		return httpserver.NewResponseWithError(errors.NewBadRequest("No comment id input"))
 	}
+	comment, err := adapter.GetComment(param.ID)
+	if err != nil {
+		loggers.Warn.Print("ReportComment get comment id:%s error:%s", param.ID.Hex(), err.Error())
+		return httpserver.NewResponseWithError(errors.NewNotFound("Comment not found"))
+	}
+	if comment.Status != domain.ApoCommentStatusLocked {
+		loggers.Warn.Printf("ReportComment invalid comment status:%d", comment.Status)
+		if comment.Status == domain.ApoCommentStatusFree {
+			return httpserver.NewResponseWithError(errors.NewBadRequest("Comment timeout recycle"))
+		} else {
+			return httpserver.NewResponseWithError(errors.NewBadRequest("Invalid comment status"))
+		}
+	}
 	if param.Errno != 0 {
 		param.Status = domain.ApoCommentStatusFree
 	} else {

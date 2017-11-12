@@ -1,9 +1,11 @@
 package adapter
 
 import (
+	"aposervice/config"
 	"aposervice/domain"
 	"fmt"
 	"fxlibraries/loggers"
+	"fxlibraries/mongo"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"time"
@@ -56,6 +58,46 @@ func UpdateComment(param *domain.ApoComment) (*domain.ApoComment, error) {
 		return nil, err
 	}
 	return &comment, nil
+}
+
+// GetComment
+func GetComment(id bson.ObjectId) (*domain.ApoComment, error) {
+	var comment domain.ApoComment
+	pool := mgoPool.C("apo_comments")
+	if err := pool.FindId(id).One(&comment); err != nil {
+		return nil, err
+	}
+	return &comment, nil
+}
+
+// RecycleComment
+func RecycleComment() error {
+	pool := mgoPool.C("apo_comments")
+	now := time.Now()
+	update := bson.M{
+		"$set": bson.M{
+			"status":      domain.ApoCommentStatusFree,
+			"update_time": &now,
+		},
+	}
+	query := bson.M{
+		"status": domain.ApoCommentStatusLocked,
+		"update_time": bson.M{
+			"$lt": now.Add(-(config.Conf.CommentTimeout * 1000000000)),
+		},
+	}
+	info, err := pool.UpdateAll(query, update)
+	if err != nil {
+		if mongo.NotFound(err) {
+			loggers.Info.Printf("RecycleComment no comment need recyclee")
+			return nil
+		}
+		loggers.Info.Printf("RecycleComment error:%s", err.Error())
+		return nil
+	}
+	loggers.Info.Printf("RecycleComment count:%d", info.Updated)
+
+	return nil
 }
 
 // IpUsedCount

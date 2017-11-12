@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"time"
 )
 
 type Config struct {
@@ -14,6 +15,7 @@ type Config struct {
 	MongoDB            domain.DBConf
 	Server             domain.ServerConf
 	CommentDayMaxCount int64
+	CommentTimeout     time.Duration
 }
 
 var (
