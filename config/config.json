@@ -22,5 +22,5 @@
         "Host": "localhost"
     },
     "CommentDayMaxCount": 1,
-    "CommentTimeout":60
+    "CommentTimeout":360
 }

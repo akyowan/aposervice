@@ -51,7 +51,7 @@ func UpdateComment(param *domain.ApoComment) (*domain.ApoComment, error) {
 		update["apo_id"] = param.ApoID
 	}
 	change := mgo.Change{
-		Update:    bson.M{"$set": update},
+		Update:    bson.M{"$set": update, "$push": bson.M{"errnos": param.Errno}},
 		ReturnNew: true,
 	}
 	if _, err := pool.FindId(param.ID).Apply(change, &comment); err != nil {
